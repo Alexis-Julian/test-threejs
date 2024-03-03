@@ -1,7 +1,8 @@
 import * as THREE from "three";
 import { OrbitControls } from "three/examples/jsm/Addons.js";
+import getStarfield from "../utils/getStarfield";
 // SCENE
-export default (element: HTMLElement, ArrayProps: Array<any>) => {
+export default (element: HTMLElement) => {
 	const scene = new THREE.Scene();
 	const sizes = {
 		HEIGHT: element.offsetHeight,
@@ -16,7 +17,7 @@ export default (element: HTMLElement, ArrayProps: Array<any>) => {
 	);
 
 	// RENDERER
-	const renderer = new THREE.WebGLRenderer();
+	const renderer = new THREE.WebGLRenderer({ antialias: true });
 	renderer.setSize(sizes.WIDTH, sizes.HEIGHT);
 
 	// CONTROLS
@@ -25,19 +26,79 @@ export default (element: HTMLElement, ArrayProps: Array<any>) => {
 	controls.update();
 
 	// INIT CAMERA
-	camera.position.z = 30;
-	camera.position.x = -4;
-	camera.position.y = 6;
+	camera.position.z = 2;
+	/* camera.position.x = -4;
+	camera.position.y = 6; */
 	camera.lookAt(0, 0, -20);
 
+	//--------------LIGHT-----------------------------------------
+	/* Ambient Light */
+	// const light = new THREE.AmbientLight(0x404040); // soft white light
+	// scene.add(light);
+
+	/* Hemispher Light */
+	//const light = new THREE.HemisphereLight();
+	//scene.add(light);
+
+	/* Directional Light */
+	//const directionalLight = new THREE.DirectionalLight(0xffffff, 4);
+	//scene.add(directionalLight);
+
+	/* Position Light */
+	/* const light = new THREE.PointLight(0xff0000, 1, 100);
+	light.position.set(50, 50, 50);
+	scene.add(light); */
+	/* ------------------------------------------------------------------------------ */
+
+	/* ----------------------HEARTH----------------------------------------------- */
+	const detail = 12;
+
+	const earthGroup = new THREE.Group();
+	earthGroup.rotation.x = (-23.4 * Math.PI) / 180;
+	scene.add(earthGroup);
+
+	const geometry = new THREE.IcosahedronGeometry(1, detail);
+
+	const material = new THREE.MeshStandardMaterial({
+		map: new THREE.TextureLoader().load("8k_earth_daymap.jpg"),
+	});
+
+	const earthMesh = new THREE.Mesh(geometry, material);
+	earthGroup.add(earthMesh);
+	// scene.add(earthMesh);
+
+	const stars = getStarfield({ numStars: 1000 });
+	scene.add(stars);
+
+	const lightsMath = new THREE.MeshBasicMaterial({
+		map: new THREE.TextureLoader().load("8k_earth_nightmap.jpg"),
+		// color: 0x00000ff,
+	});
+	const lightMesh = new THREE.Mesh(geometry, lightsMath);
+	earthGroup.add(lightMesh);
+
+	const cloudsMat = new THREE.MeshStandardMaterial({
+		map: new THREE.TextureLoader().load("8k_earth_clouds.jpg"),
+		blending: THREE.AdditiveBlending,
+	});
+
+	const cloudsMesh = new THREE.Mesh(geometry, cloudsMat);
+	cloudsMesh.scale.setScalar(1.003);
+	earthGroup.add(cloudsMesh);
+
+	const sunLight = new THREE.DirectionalLight(0xffffff);
+	sunLight.position.set(-2, 0.5, 1.5);
+	scene.add(sunLight);
+
+	/* ------------------------------------------------------------------------------ */
 	// INIT HEMISPHERE LIGHT
-	scene.add(new THREE.AmbientLight(0xffffff, 0.5));
+	// scene.add(new THREE.AmbientLight(0xffffff, ));
 
 	// SCENE
-	scene.background = new THREE.Color(0xffffff);
+	// scene.background = new THREE.Color(0x0000);
 
 	// TEXTURE LOADER
-	const textureLoader = new THREE.TextureLoader();
+	// const textureLoader = new THREE.TextureLoader();
 
 	// PLANE
 	/* const tiles = textureLoader.load("/Substance_Graph_Roughness.jpg");
@@ -51,75 +112,28 @@ export default (element: HTMLElement, ArrayProps: Array<any>) => {
 	plane2.position.x = -5.8;
 	scene.add(plane2); */
 
-	/* for (let index = 1; index < 10; index++) {
-		// Dibujar el número 0
-		// Dibujar el número 1
-		ctx.beginPath();
-		ctx.moveTo(50 + width_spaccing, 30);
-		ctx.lineTo(50 + width_spaccing, 70);
-		ctx.stroke();
-
-		ctx.beginPath();
-		ctx.arc(100 * index, 50, 20, 0, 2 * Math.PI);
-		ctx.stroke();
-
-		width_spaccing += 100;
-	} */
-	// CANVAS
-	const canvas = document.createElement("canvas");
-	canvas.width = 920;
-	canvas.height = 1080;
-	const ctx = canvas.getContext("2d");
-	if (!ctx) throw new Error("Can not create canvas");
-
-	/* let width_spaccing = 0;
-	ctx.strokeStyle = "green";
-	ctx.beginPath();
-	ctx.moveTo(50, 30);
-	ctx.lineTo(50, 70);
-	ctx.stroke();
-
-	ctx.beginPath();
-	ctx.arc(100, 50, 2, 0, 5 * Math.PI);
-	ctx.stroke(); */
-	function drawBinaryValues() {
-		const cellSize = 20; // Tamaño de cada celda
-		const numRows = Math.floor(canvas.height / cellSize);
-		const numCols = Math.floor(canvas.width / cellSize);
-		if (!ctx) throw new Error("Can not create canvas");
-
-		for (let row = 0; row < numRows; row++) {
-			for (let col = 0; col < numCols; col++) {
-				// Generamos valores aleatorios 0 o 1
-				const value = Math.random() < 0.5 ? 0 : 1;
-
-				ctx.fillStyle = value === 1 ? "black" : "white";
-				ctx.fillRect(col * cellSize, row * cellSize, cellSize, cellSize);
-			}
-		}
-	}
-
-	drawBinaryValues();
-	const bgCanvas = new THREE.CanvasTexture(canvas);
-
 	//SPHERE
-	// const texture = textureLoader.load("/bgt.svg");
-
+	/* 
 	const geometry = new THREE.SphereGeometry(15, 32, 16);
 	const material = new THREE.MeshStandardMaterial({
-		map: bgCanvas,
+		color: "0x000fff",
+		wireframe: true,
 	});
 	const sphere = new THREE.Mesh(geometry, material);
-	scene.add(sphere);
+	scene.add(sphere); */
 
 	function animate() {
-		// sphere.rotation.x += 0.0;
+		requestAnimationFrame(animate);
+
+		// cartMesh.rotation.x += 0.0;
 		// console.log(ArrayProps);
-		// sphere.rotation.y += 0.01;
+		// cartMesh.rotation.y += 0.01;
+		cloudsMesh.rotation.y += 0.002;
+		earthMesh.rotation.y += 0.002;
+		lightMesh.rotation.y += 0.002;
 		controls.update();
 
 		renderer.render(scene, camera);
-		requestAnimationFrame(animate);
 	}
 
 	element.appendChild(renderer.domElement);
